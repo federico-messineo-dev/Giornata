@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>La Giornata — Federico</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400&display=swap');
+
+```
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #060608;
+  color: #e2ddd6;
+  font-family: Georgia, serif;
+  min-height: 100vh;
+}
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+.serif { font-family: 'Playfair Display', serif; }
+
+/* HEADER */
+.header {
+  padding: 52px 24px 36px;
+  border-bottom: 1px solid #111;
+}
+.header-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: #2e2e38;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(38px, 8vw, 62px);
+  font-weight: 400;
+  line-height: 0.95;
+  color: #e2ddd6;
+  letter-spacing: -0.02em;
+}
+.header-sub {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-style: italic;
+  color: #444;
+  margin-top: 12px;
+}
+
+/* FILTERS */
+.filters {
+  padding: 14px 24px;
+  border-bottom: 1px solid #0e0e12;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #2a2a32;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.filter-btn {
+  background: transparent;
+  border: 1px solid #1e1e24;
+  border-radius: 2px;
+  padding: 5px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #444;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-btn.active {
+  color: #e2ddd6;
+  background: rgba(255,255,255,0.06);
+  border-color: #444;
+}
+
+/* SLOT */
+.slot {
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid #0c0c10;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.slot:hover { background: rgba(255,255,255,0.02); }
+.slot.open { background: rgba(200,169,110,0.04); }
+
+.slot-row {
+  display: flex;
+  align-items: center;
+  padding: 15px 16px 15px 20px;
+  gap: 0;
+}
+.slot-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #333;
+  min-width: 58px;
+}
+.slot-dur {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #252530;
+  min-width: 64px;
+}
+.slot-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-right: 16px;
+  opacity: 0.3;
+  flex-shrink: 0;
+}
+.slot-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  color: #777;
+  flex: 1;
+}
+.slot-name.highlight { font-size: 16px; color: #bbb; font-weight: 600; }
+.slot-cat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  opacity: 0.5;
+  letter-spacing: 0.1em;
+  margin-right: 10px;
+}
+.slot-arrow {
+  font-size: 9px;
+  color: #2a2a32;
+  font-family: monospace;
+}
+
+.slot-detail {
+  display: none;
+  padding: 0 20px 18px 24px;
+}
+.slot-detail p {
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.75;
+  max-width: 540px;
+}
+.slot.open .slot-detail { display: block; }
+.slot.open .slot-arrow::after { content: '▲'; }
+.slot:not(.open) .slot-arrow::after { content: '▼'; }
+.slot.open .slot-dot { opacity: 1; }
+.slot.open .slot-time { color: inherit; }
+.slot.open .slot-name { color: #e2ddd6; }
+
+/* WEEK GRID */
+.week-section {
+  margin: 36px 24px;
+  border: 1px solid #111;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.week-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #111;
+  background: #08080b;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: #2e2e38;
+  text-transform: uppercase;
+}
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.week-day {
+  padding: 14px 8px;
+  border-right: 1px solid #0e0e12;
+  background: #090909;
+  text-align: center;
+}
+.week-day:last-child { border-right: none; background: #07070a; }
+.week-day:nth-child(6) { background: #07070a; }
+.week-day-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 8px;
+  letter-spacing: 0.1em;
+}
+.week-day:nth-child(6) .week-day-name,
+.week-day:last-child .week-day-name { color: #2a2a32; }
+.week-icon { font-size: 12px; margin-bottom: 6px; }
+.week-focus {
+  font-family: Georgia, serif;
+  font-size: 10px;
+  color: #555;
+  line-height: 1.4;
+}
+.week-day:nth-child(6) .week-focus,
+.week-day:last-child .week-focus { color: #2a2a32; }
+
+/* NOTE */
+.note {
+  margin: 0 24px 36px;
+  border: 1px solid #1a1412;
+  border-radius: 3px;
+  padding: 20px 24px;
+  background: #0c0a08;
+}
+.note-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #c8a96e;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.note p {
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.75;
+}
+.note em { color: #888; font-style: normal; }
+
+/* FOOTER */
+.footer {
+  padding: 36px 24px;
+  border-top: 1px solid #0e0e12;
+  text-align: center;
+}
+.footer p {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-style: italic;
+  color: #2e2e38;
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #1a1a1f; }
+```
+
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+
+  <div class="header">
+    <p class="header-label">Giornata tipo — Federico — Capena</p>
+    <h1>La Giornata</h1>
+    <p class="header-sub">Sveglia 9:00 · Palestra a piedi · Casa Capena</p>
+  </div>
+
+  <!-- FILTERS -->
+
+  <div class="filters">
+    <span class="filter-label">Filtra:</span>
+    <button class="filter-btn active" data-cat="all">Tutto</button>
+    <button class="filter-btn" data-cat="lavoro" style="--c:#c8a96e">Lavoro</button>
+    <button class="filter-btn" data-cat="corpo" style="--c:#7eb8a4">Corpo</button>
+    <button class="filter-btn" data-cat="mente" style="--c:#a07cb8">Mente</button>
+    <button class="filter-btn" data-cat="impara" style="--c:#e07a7a">Impara</button>
+    <button class="filter-btn" data-cat="libero" style="--c:#6a8fb8">Libero</button>
+  </div>
+
+  <!-- SCHEDULE -->
+
+  <div id="schedule"></div>
+
+  <!-- WEEK -->
+
+  <div class="week-section">
+    <div class="week-header">Settimana tipo</div>
+    <div class="week-grid">
+      <div class="week-day"><div class="week-day-name">LUN</div><div class="week-icon">🏋</div><div class="week-focus">Audit sito / Sviluppo</div></div>
+      <div class="week-day"><div class="week-day-name">MAR</div><div class="week-icon">🚶</div><div class="week-focus">Sviluppo + n8n</div></div>
+      <div class="week-day"><div class="week-day-name">MER</div><div class="week-icon">🏋</div><div class="week-focus">Sviluppo + SEO</div></div>
+      <div class="week-day"><div class="week-day-name">GIO</div><div class="week-icon">🚶</div><div class="week-focus">n8n + Studio</div></div>
+      <div class="week-day"><div class="week-day-name">VEN</div><div class="week-icon">🏋</div><div class="week-focus">Sviluppo + Review</div></div>
+      <div class="week-day"><div class="week-day-name">SAB</div><div class="week-icon">💤</div><div class="week-focus">Lavoro leggero</div></div>
+      <div class="week-day"><div class="week-day-name">DOM</div><div class="week-icon">💤</div><div class="week-focus">Riposo</div></div>
+    </div>
+  </div>
+
+  <!-- NOTE TAPERING -->
+
+  <div class="note">
+    <div class="note-title">Nota — Tapering Escitalopram</div>
+    <p>Durante il tapering il rendimento può variare giorno per giorno. Se un giorno riesci solo a fare 1 blocco invece di 2, <em>non è fallimento — è il farmaco.</em> L'obiettivo è creare il ritmo. Il ritmo rimane anche nei giorni brutti.</p>
+  </div>
+
+  <!-- FOOTER -->
+
+  <div class="footer">
+    <p>"Il ritmo costruisce più della motivazione.<br>La motivazione va e viene. Il ritmo rimane."</p>
+  </div>
+
+  <script>
+    const cats = {
+      lavoro: { color: "#c8a96e", label: "Lavoro" },
+      corpo:  { color: "#7eb8a4", label: "Corpo" },
+      mente:  { color: "#a07cb8", label: "Mente" },
+      impara: { color: "#e07a7a", label: "Impara" },
+      libero: { color: "#6a8fb8", label: "Libero" }
+    };
+
+    const slots = [
+      { time:"09:00", dur:"30 min",   cat:"corpo",  label:"Sveglia & Attivazione",         detail:"Niente telefono per i primi 15 minuti. Acqua, caffè, finestra aperta. Fai la doccia prima di toccare qualsiasi schermo. Il cervello durante il tapering ha bisogno di questo buffer." },
+      { time:"09:30", dur:"30 min",   cat:"mente",  label:"Colazione + Review del giorno",  detail:"Mangia qualcosa con proteine (uova, yogurt greco, affettato). Mentre mangi, guarda il piano e decidi UNA cosa principale da completare oggi. Solo una." },
+      { time:"10:00", dur:"2h–3h",    cat:"lavoro", label:"Blocco Lavoro Principale",       detail:"Il tuo momento migliore della giornata. Schermo pulito, telefono capovolto. Questa settimana: audit La Veranda da Simona. Settimana 3+: sviluppo sito personale. Segui l'hyperfocus se arriva — non fermarlo.", highlight:true },
+      { time:"12:30", dur:"15 min",   cat:"corpo",  label:"Pausa vera",                     detail:"Stacca dallo schermo completamente. Esci sul balcone o in giardino. Niente scroll. Anche solo guardare fuori 10 minuti resetta il focus." },
+      { time:"12:45", dur:"45 min",   cat:"corpo",  label:"Pranzo",                         detail:"Pasto completo con proteine. Puoi mettere un episodio di anime o un podcast — qui va benissimo. È il tuo break mentale di mezzo giorno." },
+      { time:"13:30", dur:"30 min",   cat:"lavoro", label:"Digest & Micro-task",             detail:"Non iniziare lavoro pesante subito dopo pranzo. Usa questo slot per cose leggere: email, tutorial n8n passivi, aggiornare checklist, ricerca keyword SEO." },
+      { time:"14:00", dur:"1h30",     cat:"lavoro", label:"Blocco Lavoro Secondario",       detail:"Secondo blocco produttivo. Meno intenso del mattino ma comunque mirato. Se il mattino hai lavorato sul sito, usa questo per imparare n8n o viceversa." },
+      { time:"15:30", dur:"15 min",   cat:"corpo",  label:"Pausa caffè",                    detail:"Ultimo caffè della giornata. Oltre questo orario interferisce col sonno, specie durante il tapering." },
+      { time:"15:45", dur:"45 min",   cat:"impara", label:"Blocco Apprendimento",           detail:"Studia qualcosa di specifico: un tutorial n8n, un video su SEO tecnico, documentazione Vercel. Input puro. Il cervello assorbe bene a quest'ora." },
+      { time:"16:30", dur:"1h–1h30",  cat:"corpo",  label:"Palestra",                       detail:"A piedi, 3 volte a settimana (Lun/Mer/Ven). Gli altri giorni: camminata lunga di 30–40 minuti. Non saltare — è il tuo antidepressivo più immediato.", highlight:true },
+      { time:"18:00", dur:"1h",       cat:"libero", label:"Tempo libero / Decompressione",  detail:"Nessun task. Rocket League, musica, camminata extra, chiamata con un amico. Questo slot non è negoziabile — zona franca prima di sera." },
+      { time:"19:00", dur:"1h",       cat:"corpo",  label:"Cena",                           detail:"Pasto completo. Se hai energia residua, scrivi 3 cose che hai fatto oggi — per costruire evidenza contro l'anedonia." },
+      { time:"20:00", dur:"30 min",   cat:"mente",  label:"Review & Domani",                detail:"5 minuti: cosa ho completato oggi? 5 minuti: cosa faccio domani? Poi chiudi tutto. Non riaprire il lavoro. La sera è tua." },
+      { time:"20:30", dur:"2h",       cat:"libero", label:"Anime / Serata",                 detail:"6–7 episodi, come concordato. Oppure Rocket League con un amico (max 1h). Riposo guadagnato — non è tempo perso." },
+      { time:"23:00", dur:"30 min",   cat:"corpo",  label:"Wind down",                      detail:"Luci basse, niente schermo se riesci. L'ottavo episodio per addormentarti va bene. Stesso orario ogni notte: il cervello si ricalibra sulla routine." },
+      { time:"23:30", dur:"—",        cat:"corpo",  label:"Sonno",                          detail:"Target: 7–8 ore. Non forzare se non arriva subito — durante il tapering il sonno può essere irregolare. L'importante è essere a letto." },
+    ];
+
+    let activeFilter = "all";
+    let openIndex = null;
+
+    function render() {
+      const container = document.getElementById("schedule");
+      container.innerHTML = "";
+
+      const visible = activeFilter === "all" ? slots : slots.filter(s => s.cat === activeFilter);
+
+      visible.forEach((s, i) => {
+        const globalIdx = slots.indexOf(s);
+        const c = cats[s.cat];
+        const isOpen = openIndex === globalIdx;
+
+        const div = document.createElement("div");
+        div.className = "slot" + (isOpen ? " open" : "");
+        div.style.borderLeftColor = isOpen ? c.color : "transparent";
+
+        div.innerHTML = `
+          <div class="slot-row">
+            <span class="slot-time" style="${isOpen ? 'color:'+c.color : ''}">${s.time}</span>
+            <span class="slot-dur">${s.dur}</span>
+            <div class="slot-dot" style="background:${c.color}"></div>
+            <span class="slot-name${s.highlight ? ' highlight' : ''}" style="${isOpen ? 'color:#e2ddd6' : ''}">${s.label}</span>
+            <span class="slot-cat" style="color:${c.color}">${c.label.toUpperCase()}</span>
+            <span class="slot-arrow"></span>
+          </div>
+          <div class="slot-detail"><p>${s.detail}</p></div>
+        `;
+
+        div.addEventListener("click", () => {
+          openIndex = isOpen ? null : globalIdx;
+          render();
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    // Filter buttons
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeFilter = btn.dataset.cat;
+        openIndex = null;
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (activeFilter !== "all") {
+          btn.style.borderColor = getComputedStyle(btn).getPropertyValue("--c") || "#444";
+          btn.style.color = getComputedStyle(btn).getPropertyValue("--c") || "#e2ddd6";
+        }
+        render();
+      });
+    });
+
+    render();
+  </script>
+
+</body>
+</html>

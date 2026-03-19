@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Piano Lancio — La Veranda da Simona</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400&display=swap');
+
+```
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #060608; color: #e2ddd6; font-family: Georgia, serif; min-height: 100vh; }
+
+/* HEADER */
+.header { padding: 52px 24px 36px; border-bottom: 1px solid #111; }
+.header-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.25em; color: #2e2e38; text-transform: uppercase; margin-bottom: 14px; }
+.header h1 { font-family: 'Playfair Display', serif; font-size: clamp(38px, 8vw, 62px); font-weight: 400; line-height: 0.95; color: #e2ddd6; letter-spacing: -0.02em; }
+.header-sub { font-family: 'Playfair Display', serif; font-size: 16px; font-style: italic; color: #444; margin-top: 12px; }
+
+/* DAY TABS */
+.day-tabs { display: flex; border-bottom: 1px solid #111; overflow-x: auto; scrollbar-width: none; }
+.day-tabs::-webkit-scrollbar { display: none; }
+.day-tab { background: transparent; border: none; border-right: 1px solid #0e0e12; border-bottom: 2px solid transparent; padding: 14px 20px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: #2e2e38; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 6px; white-space: nowrap; min-width: 72px; }
+.day-tab:hover { color: #555; }
+.day-tab.active { color: #e2ddd6; }
+.fase-pip { width: 5px; height: 5px; border-radius: 50%; opacity: 0.5; transition: opacity 0.2s; }
+.day-tab.active .fase-pip { opacity: 1; }
+
+/* FASE INDICATOR */
+.fase-indicator { padding: 11px 24px; border-bottom: 1px solid #0e0e12; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.fase-indicator .desc { color: #222; }
+
+/* FILTERS */
+.filters { padding: 14px 24px; border-bottom: 1px solid #0e0e12; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.filter-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #2a2a32; letter-spacing: 0.2em; text-transform: uppercase; margin-right: 4px; }
+.filter-btn { background: transparent; border: 1px solid #1e1e24; border-radius: 2px; padding: 5px 12px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #444; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; }
+.filter-btn.active { color: #e2ddd6; background: rgba(255,255,255,0.06); border-color: #444; }
+
+/* SLOT */
+.slot { border-left: 3px solid transparent; border-bottom: 1px solid #0c0c10; cursor: pointer; transition: all 0.2s; }
+.slot:hover { background: rgba(255,255,255,0.02); }
+.slot.open { background: rgba(200,169,110,0.04); }
+.slot-row { display: flex; align-items: center; padding: 15px 16px 15px 20px; gap: 0; }
+.slot-time { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #333; min-width: 58px; }
+.slot-dur { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #252530; min-width: 64px; }
+.slot-dot { width: 5px; height: 5px; border-radius: 50%; margin-right: 16px; opacity: 0.3; flex-shrink: 0; }
+.slot-name { font-family: 'Playfair Display', serif; font-size: 14px; color: #777; flex: 1; }
+.slot-name.highlight { font-size: 16px; color: #bbb; font-weight: 600; }
+.slot-cat { font-family: 'JetBrains Mono', monospace; font-size: 8px; opacity: 0.5; letter-spacing: 0.1em; margin-right: 10px; }
+.slot-arrow { font-size: 9px; color: #2a2a32; font-family: monospace; }
+.slot-detail { display: none; padding: 0 20px 20px 24px; }
+.slot.open .slot-detail { display: block; }
+.slot.open .slot-arrow::after { content: '▲'; }
+.slot:not(.open) .slot-arrow::after { content: '▼'; }
+.slot.open .slot-dot { opacity: 1; }
+.slot.open .slot-time { color: inherit; }
+.slot.open .slot-name { color: #e2ddd6; }
+.slot-detail p { font-family: Georgia, serif; font-size: 13px; color: #666; line-height: 1.75; max-width: 580px; margin-bottom: 8px; }
+.slot-detail p strong { color: #888; font-weight: normal; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em; }
+.slot-detail p em { font-style: italic; color: #888; }
+
+/* STEPS */
+.slot-steps { margin: 10px 0; padding-left: 0; list-style: none; counter-reset: steps; max-width: 580px; }
+.slot-steps li { font-family: Georgia, serif; font-size: 13px; color: #666; line-height: 1.75; padding: 5px 0 5px 30px; position: relative; counter-increment: steps; }
+.slot-steps li::before { content: counter(steps); position: absolute; left: 0; top: 6px; width: 19px; height: 19px; display: flex; align-items: center; justify-content: center; background: #0e0e14; border: 1px solid #1c1c26; border-radius: 2px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #3a3a50; }
+.slot-steps li code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9090b0; background: #0d0d15; padding: 1px 6px; border-radius: 2px; }
+.slot-steps li strong { color: #999; font-weight: normal; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: #333; }
+.slot-steps li em { color: #999; font-style: italic; }
+
+/* CODE BLOCK */
+.slot-code { background: #07070e; border: 1px solid #13131c; border-radius: 3px; padding: 14px 16px; margin: 12px 0; overflow-x: auto; max-width: 580px; }
+.slot-code code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6a6a90; line-height: 1.85; white-space: pre; display: block; }
+
+/* CHECK */
+.slot-check { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #7eb8a4; margin-top: 14px; padding: 9px 13px; border-left: 2px solid #7eb8a4; background: rgba(126,184,164,0.05); max-width: 580px; letter-spacing: 0.05em; line-height: 1.6; }
+
+/* TIP NOTE */
+.slot-note { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #444; margin-top: 10px; padding: 8px 12px; border-left: 2px solid #1e1e28; max-width: 580px; line-height: 1.65; letter-spacing: 0.04em; }
+
+/* WEEK GRID */
+.week-section { margin: 36px 24px; border: 1px solid #111; border-radius: 3px; overflow: hidden; }
+.week-header { padding: 16px 20px; border-bottom: 1px solid #111; background: #08080b; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #2e2e38; text-transform: uppercase; }
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.week-day { padding: 14px 8px; border-right: 1px solid #0e0e12; background: #090909; text-align: center; cursor: pointer; transition: background 0.15s; }
+.week-day:hover { background: rgba(255,255,255,0.02); }
+.week-day:last-child { border-right: none; background: #07070a; }
+.week-day:nth-child(6) { background: #07070a; }
+.week-day-name { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #555; margin-bottom: 8px; letter-spacing: 0.1em; }
+.week-day:nth-child(6) .week-day-name, .week-day:last-child .week-day-name { color: #2a2a32; }
+.week-icon { font-size: 12px; margin-bottom: 6px; }
+.week-focus { font-family: Georgia, serif; font-size: 10px; color: #555; line-height: 1.4; }
+.week-day:nth-child(6) .week-focus, .week-day:last-child .week-focus { color: #2a2a32; }
+
+/* PROGRESS BAR */
+.progress-section { margin: 0 24px 28px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.progress-fase { padding: 10px 12px; border: 1px solid #111; border-radius: 3px; background: #08080b; }
+.progress-fase-num { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #2a2a32; letter-spacing: 0.15em; margin-bottom: 4px; }
+.progress-fase-label { font-family: Georgia, serif; font-size: 11px; color: #444; line-height: 1.4; }
+.progress-fase-day { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #2a2a32; margin-top: 6px; letter-spacing: 0.1em; }
+
+/* NOTE */
+.note { margin: 0 24px 36px; border: 1px solid #1a1412; border-radius: 3px; padding: 20px 24px; background: #0c0a08; }
+.note-title { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #c8a96e; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 10px; }
+.note p { font-family: Georgia, serif; font-size: 13px; color: #555; line-height: 1.75; }
+.note em { color: #888; font-style: normal; }
+
+/* FOOTER */
+.footer { padding: 36px 24px; border-top: 1px solid #0e0e12; text-align: center; }
+.footer p { font-family: 'Playfair Display', serif; font-size: 16px; font-style: italic; color: #2e2e38; max-width: 420px; margin: 0 auto; line-height: 1.8; }
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #1a1a1f; }
+
+@media (max-width: 600px) {
+  .progress-section { grid-template-columns: 1fr 1fr; }
+  .progress-fase:last-child { grid-column: span 2; }
+  .week-day-name { font-size: 8px; }
+  .week-focus { font-size: 9px; }
+}
+```
+
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <p class="header-label">Piano Lancio — La Veranda da Simona — Capena</p>
+    <h1>La Giornata</h1>
+    <p class="header-sub">Settimana del lancio · 5 fasi · Dal dominio al GEO</p>
+  </div>
+
+  <div class="day-tabs" id="day-tabs">
+    <button class="day-tab active" data-day="lun">LUN<div class="fase-pip" style="background:#7eb8a4"></div></button>
+    <button class="day-tab" data-day="mar">MAR<div class="fase-pip" style="background:#a07cb8"></div></button>
+    <button class="day-tab" data-day="mer">MER<div class="fase-pip" style="background:#a07cb8"></div></button>
+    <button class="day-tab" data-day="gio">GIO<div class="fase-pip" style="background:#6a8fb8"></div></button>
+    <button class="day-tab" data-day="ven">VEN<div class="fase-pip" style="background:#e07a7a"></div></button>
+    <button class="day-tab" data-day="sab">SAB<div class="fase-pip" style="background:#c8a96e"></div></button>
+    <button class="day-tab" data-day="dom">DOM<div class="fase-pip" style="background:#2e2e38"></div></button>
+  </div>
+
+  <div class="fase-indicator" id="fase-indicator">
+    <span style="color:#7eb8a4">Fase 1 — Dominio + Hosting</span>
+    <span class="desc">Deploy finale · Aruba · DNS · Vercel</span>
+  </div>
+
+  <div class="filters">
+    <span class="filter-label">Filtra:</span>
+    <button class="filter-btn active" data-cat="all">Tutto</button>
+    <button class="filter-btn" data-cat="lavoro" style="--c:#c8a96e">Lavoro</button>
+    <button class="filter-btn" data-cat="corpo" style="--c:#7eb8a4">Corpo</button>
+    <button class="filter-btn" data-cat="mente" style="--c:#a07cb8">Mente</button>
+    <button class="filter-btn" data-cat="impara" style="--c:#e07a7a">Impara</button>
+    <button class="filter-btn" data-cat="libero" style="--c:#6a8fb8">Libero</button>
+  </div>
+
+  <div id="schedule"></div>
+
+  <div class="week-section">
+    <div class="week-header">Settimana del lancio — panoramica</div>
+    <div class="week-grid" id="week-grid">
+      <div class="week-day" data-jump="lun"><div class="week-day-name">LUN</div><div class="week-icon">🏋</div><div class="week-focus" style="color:#7eb8a4">F1 — Deploy + Dominio</div></div>
+      <div class="week-day" data-jump="mar"><div class="week-day-name">MAR</div><div class="week-icon">🚶</div><div class="week-focus" style="color:#a07cb8">F2 — Meta tag + Schema</div></div>
+      <div class="week-day" data-jump="mer"><div class="week-day-name">MER</div><div class="week-icon">🏋</div><div class="week-focus" style="color:#a07cb8">F2 — Sitemap + Search Console</div></div>
+      <div class="week-day" data-jump="gio"><div class="week-day-name">GIO</div><div class="week-icon">🚶</div><div class="week-focus" style="color:#6a8fb8">F3 — Google Business</div></div>
+      <div class="week-day" data-jump="ven"><div class="week-day-name">VEN</div><div class="week-icon">🏋</div><div class="week-focus" style="color:#e07a7a">F4 — AI SEO + GEO</div></div>
+      <div class="week-day" data-jump="sab"><div class="week-day-name">SAB</div><div class="week-icon">💤</div><div class="week-focus" style="color:#c8a96e">F5 — Booking + Analytics</div></div>
+      <div class="week-day" data-jump="dom"><div class="week-day-name">DOM</div><div class="week-icon">💤</div><div class="week-focus">Riposo</div></div>
+    </div>
+  </div>
+
+  <div style="margin: 0 24px 8px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a2a32;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;">Fasi della settimana</div>
+  </div>
+  <div class="progress-section">
+    <div class="progress-fase"><div class="progress-fase-num">FASE 1</div><div class="progress-fase-label" style="color:#7eb8a4">Dominio + Hosting</div><div class="progress-fase-day">LUNEDÌ</div></div>
+    <div class="progress-fase"><div class="progress-fase-num">FASE 2</div><div class="progress-fase-label" style="color:#a07cb8">SEO Classico</div><div class="progress-fase-day">MAR + MER</div></div>
+    <div class="progress-fase"><div class="progress-fase-num">FASE 3</div><div class="progress-fase-label" style="color:#6a8fb8">Google Business</div><div class="progress-fase-day">GIOVEDÌ</div></div>
+    <div class="progress-fase"><div class="progress-fase-num">FASE 4</div><div class="progress-fase-label" style="color:#e07a7a">AI SEO (GEO)</div><div class="progress-fase-day">VENERDÌ</div></div>
+    <div class="progress-fase"><div class="progress-fase-num">FASE 5</div><div class="progress-fase-label" style="color:#c8a96e">Extra & Visibilità</div><div class="progress-fase-day">SABATO</div></div>
+  </div>
+
+  <div class="note">
+    <div class="note-title">Nota — Tapering Escitalopram</div>
+    <p>Durante il tapering il rendimento può variare giorno per giorno. Se un giorno riesci solo a fare 1 blocco invece di 2, <em>non è fallimento — è il farmaco.</em> L'obiettivo è creare il ritmo. Il ritmo rimane anche nei giorni brutti.</p>
+  </div>
+
+  <div class="footer">
+    <p>"Il ritmo costruisce più della motivazione.<br>La motivazione va e viene. Il ritmo rimane."</p>
+  </div>
+
+  <script>
+    /* ── helpers ─────────────────────────────────── */
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function blk(s) { return `<div class="slot-code"><code>${esc(s.trim())}</code></div>`; }
+    function st(arr) { return `<ol class="slot-steps">${arr.map(x=>`<li>${x}</li>`).join('')}</ol>`; }
+    function chk(s) { return `<p class="slot-check">✓ Fatto quando: ${s}</p>`; }
+    function nt(s)  { return `<div class="slot-note">💡 ${s}</div>`; }
+    function p(s)   { return `<p>${s}</p>`; }
+
+    /* ── categories ─────────────────────────────── */
+    const cats = {
+      lavoro: { color:"#c8a96e", label:"Lavoro" },
+      corpo:  { color:"#7eb8a4", label:"Corpo"  },
+      mente:  { color:"#a07cb8", label:"Mente"  },
+      impara: { color:"#e07a7a", label:"Impara" },
+      libero: { color:"#6a8fb8", label:"Libero" }
+    };
+
+    /* ── base routine slots (shared) ─────────────── */
+    const R = {
+      sveglia:    { time:"09:00", dur:"30 min",  cat:"corpo",  label:"Sveglia & Attivazione",        detail: p("Niente telefono per i primi 15 minuti. Acqua, caffè, finestra aperta. Doccia prima di toccare qualsiasi schermo. Il cervello durante il tapering ha bisogno di questo buffer.") },
+      colazione:  { time:"09:30", dur:"30 min",  cat:"mente",  label:"Colazione + Review del giorno", detail: p("Mangia qualcosa con proteine (uova, yogurt greco, affettato). Mentre mangi, guarda il piano e decidi <em>una sola cosa principale</em> da completare oggi. Solo una.") },
+      pausa:      { time:"12:30", dur:"15 min",  cat:"corpo",  label:"Pausa vera",                   detail: p("Stacca dallo schermo completamente. Esci in giardino o sul balcone. Niente scroll. Anche solo 10 minuti a guardare fuori resettano il focus.") },
+      pranzo:     { time:"12:45", dur:"45 min",  cat:"corpo",  label:"Pranzo",                       detail: p("Pasto completo con proteine. Puoi mettere un episodio di anime o un podcast. È il break mentale di metà giornata.") },
+      micropost:  { time:"13:30", dur:"30 min",  cat:"lavoro", label:"Digest & verifica",            detail: p("Non iniziare lavoro pesante subito dopo pranzo. Usa questo slot per verifiche leggere, aggiornare checklist, rispondere a messaggi. Niente sviluppo.") },
+      caffe:      { time:"15:30", dur:"15 min",  cat:"corpo",  label:"Pausa caffè",                  detail: p("Ultimo caffè della giornata. Oltre questo orario interferisce col sonno, specie durante il tapering.") },
+      palestra:   { time:"16:30", dur:"1h–1h30", cat:"corpo",  label:"Palestra",                     highlight:true, detail: p("A piedi, 3 volte a settimana (Lun/Mer/Ven). Il tuo antidepressivo più immediato. Non saltare.") },
+      camminata:  { time:"16:30", dur:"40 min",  cat:"corpo",  label:"Camminata",                    detail: p("30-40 minuti fuori. Niente cuffie se riesci — è il momento per lasciare girare il cervello senza input.") },
+      libero:     { time:"18:00", dur:"1h",      cat:"libero", label:"Tempo libero / Decompressione",detail: p("Nessun task. Rocket League, musica, camminata extra. Questa zona è non negoziabile.") },
+      cena:       { time:"19:00", dur:"1h",      cat:"corpo",  label:"Cena",                         detail: p("Pasto completo. Se hai energia, scrivi 3 cose che hai fatto oggi — per costruire evidenza contro l'anedonia.") },
+      review:     { time:"20:00", dur:"30 min",  cat:"mente",  label:"Review & Domani",              detail: p("5 minuti: cosa ho completato oggi? 5 minuti: cosa faccio domani? Poi chiudi tutto. Non riaprire il lavoro. La sera è tua.") },
+      serata:     { time:"20:30", dur:"2h",      cat:"libero", label:"Anime / Serata",               detail: p("Riposo guadagnato — non è tempo perso. Rocket League, serie, quello che vuoi.") },
+      winddown:   { time:"23:00", dur:"30 min",  cat:"corpo",  label:"Wind down",                    detail: p("Luci basse, niente schermo se riesci. Stesso orario ogni notte: il cervello si ricalibra sulla routine.") },
+      sonno:      { time:"23:30", dur:"—",       cat:"corpo",  label:"Sonno",                        detail: p("Target: 7–8 ore. Non forzare se non arriva — durante il tapering il sonno può essere irregolare. L'importante è essere a letto.") }
+    };
+
+    /* ── days ────────────────────────────────────── */
+    const days = {
+
+      /* ═══════════════════════════════════════════
+         LUNEDÌ — FASE 1: Dominio + Hosting
+         ═══════════════════════════════════════════ */
+      lun: {
+        label:"Lunedì", short:"LUN",
+        fase:"Fase 1 — Dominio + Hosting",
+        faseDesc:"Deploy finale · Acquisto dominio Aruba · Configurazione DNS",
+        faseColor:"#7eb8a4",
+        slots:[
+          R.sveglia, R.colazione,
+          {
+            time:"10:00", dur:"2h 30m", cat:"lavoro", label:"Fix bug finali + Deploy su Vercel", highlight:true,
+            detail:
+              p("Ultimo sprint prima del lancio. Risolvi i bug rimasti, poi fai il push definitivo. Il sito deve girare perfettamente su mobile prima di collegare il dominio reale.") +
+              st([
+                "Apri il progetto in locale e avvia il dev server: <code>npm run dev</code>",
+                "Apri Chrome DevTools (F12) → clicca l'icona 📱 in alto a sinistra → imposta larghezza <strong>375px</strong> (iPhone SE) e poi <strong>768px</strong> (iPad)",
+                "Vai pagina per pagina e annota tutto ciò che non va: testi tagliati, immagini sovrapposte, pulsanti minuscoli o non cliccabili",
+                "Correggi i bug uno alla volta, dal più grave al meno grave. Non cercare la perfezione — risolvi i bloccanti",
+                "Quando sei soddisfatto, apri il terminale nella cartella del progetto: <code>git add .</code>",
+                "<code>git commit -m \"fix: correzioni finali pre-lancio\"</code>",
+                "<code>git push origin main</code>",
+                "Vai su <strong>vercel.com</strong> → il tuo progetto → aspetta che il badge diventi verde <strong>✓ Ready</strong> (30-60 secondi)"
+              ]) +
+              chk("il deploy Vercel è verde e il sito funziona bene su mobile reale e su desktop.")
+          },
+          R.pausa, R.pranzo,
+          {
+            time:"13:30", dur:"30 min", cat:"lavoro", label:"Verifica sito live su telefono reale",
+            detail:
+              p("Controlla il sito già deployato su Vercel direttamente dal tuo telefono (non l'emulatore Chrome — è diverso). Testa ogni sezione, ogni link, ogni pulsante. Scrivi i bug trovati su un doc.") +
+              nt("Se trovi altri bug: segnali su una lista separata e correggili nel prossimo push. Non aprire VS Code adesso o perdi il ritmo del pomeriggio.")
+          },
+          {
+            time:"14:00", dur:"1h 30m", cat:"lavoro", label:"Registra dominio Aruba + Configura DNS Vercel", highlight:true,
+            detail:
+              p("Il momento del lancio vero. Alla fine di questo blocco, laverandadasimona.it punterà al tuo sito. Segui gli step nell'ordine esatto — non saltarne nessuno.") +
+              st([
+                "Vai su <strong>aruba.it</strong> → cerca <em>laverandadasimona.it</em> nella barra in homepage",
+                "Se disponibile, clicca 'Aggiungi al carrello' → scegli durata: <strong>1 anno</strong> → vai al checkout",
+                "Inserisci i dati richiesti: nome, cognome, codice fiscale, indirizzo — obbligatori per legge per i domini .it → paga con carta o PayPal (~€5-8)",
+                "Dopo l'acquisto ricevi email di conferma. Accedi al pannello Aruba → <strong>'I tuoi servizi'</strong> → <strong>'Domini'</strong> → clicca su <em>laverandadasimona.it</em>",
+                "LASCIA QUESTA SCHEDA ARUBA APERTA. Apri una nuova scheda: <strong>vercel.com</strong> → accedi → clicca sul tuo progetto",
+                "Su Vercel: <strong>Settings</strong> (in alto) → <strong>Domains</strong> (menu a sinistra) → scrivi <em>laverandadasimona.it</em> → Add",
+                "Ripeti aggiungendo anche <em>www.laverandadasimona.it</em> → Add",
+                "Vercel ti mostra i record DNS da copiare. Di solito: tipo <code>A</code> con valore <code>76.76.21.21</code>, e tipo <code>CNAME</code> nome <code>www</code> valore <code>cname.vercel-dns.com</code>",
+                "Torna su Aruba → cerca <strong>'Gestisci DNS'</strong> o <strong>'Zone DNS'</strong> → clicca 'Aggiungi record'",
+                "Aggiungi record A: tipo = <code>A</code>, nome = <code>@</code> (o lascia vuoto), valore = <code>76.76.21.21</code> → Salva",
+                "Aggiungi record CNAME: tipo = <code>CNAME</code>, nome = <code>www</code>, valore = <code>cname.vercel-dns.com</code> → Salva",
+                "Aspetta <strong>15-30 minuti</strong>. Torna su Vercel → Domains: se vedi ✓ verde sei live!",
+                "Verifica in una finestra anonima del browser: <em>https://www.laverandadasimona.it</em>"
+              ]) +
+              chk("vai su www.laverandadasimona.it in incognito e vedi il sito con il lucchetto 🔒.")
+          },
+          R.caffe,
+          {
+            time:"15:45", dur:"45 min", cat:"impara", label:"Studia: come funziona il DNS",
+            detail:
+              p("Ora che hai configurato i DNS, guarda come funzionano davvero. Cerca su YouTube <strong>\"DNS in 100 Seconds\"</strong> di Fireship — è il miglior video di 2 minuti che puoi spendere. Poi leggi la docs Vercel su custom domains.") +
+              nt("Usa <strong>whatsmydns.net</strong> per vedere in tempo reale la propagazione del tuo dominio in tutto il mondo. Inserisci laverandadasimona.it e controlla il tipo A.")
+          },
+          R.palestra, R.libero, R.cena, R.review, R.serata, R.winddown, R.sonno
+        ]
+      },
+
+      /* ═══════════════════════════════════════════
+         MARTEDÌ — FASE 2 pt.1: Meta tag + Schema.org
+         ═══════════════════════════════════════════ */
+      mar: {
+        label:"Martedì", short:"MAR",
+        fase:"Fase 2 — SEO Classico (parte 1)",
+        faseDesc:"Meta tag · OpenGraph · Schema.org LodgingBusiness",
+        faseColor:"#a07cb8",
+        slots:[
+          R.sveglia, R.colazione,
+          {
+            time:"10:00", dur:"2h", cat:"lavoro", label:"Meta tag + OpenGraph in Next.js", highlight:true,
+            detail:
+              p("I meta tag dicono a Google e ai social (WhatsApp, iMessage, Facebook) come presentare il sito quando viene cercato o condiviso. Sono invisibili sulla pagina ma fondamentali per il SEO e per la condivisione.") +
+              st([
+                "Apri il progetto in VS Code",
+                "Apri il file <code>app/layout.js</code> (o layout.tsx se usi TypeScript)",
+                "Trova o crea l'export <code>metadata</code> e sostituiscilo con questo (adattando i testi alle tue parole):"
+              ]) +
+              blk(`export const metadata = {
+  title: "La Veranda da Simona — Casa vacanza a Capena, Roma",
+  description: "Casa vacanza a Capena, 30 km da Roma. Veranda privata, giardino, parcheggio gratuito, Wi-Fi, aria condizionata. Ideale per famiglie e coppie. Prenota su Airbnb.",
+  keywords: "casa vacanza Capena, affitto breve Roma nord, casa vacanza Sabina, affitto turistico Capena, weekend Lazio",
+  authors: [{ name: "La Veranda da Simona" }],
+  openGraph: {
+    title: "La Veranda da Simona — Casa vacanza a Capena",
+    description: "Casa accogliente a 30 km da Roma, con veranda e giardino privato. Prenota ora su Airbnb.",
+    url: "https://www.laverandadasimona.it",
+    siteName: "La Veranda da Simona",
+    images: [{
+      url: "https://www.laverandadasimona.it/og-image.jpg",
+      width: 1200,
+      height: 630,
+      alt: "La Veranda da Simona — Casa vacanza a Capena, Roma",
+    }],
+    locale: "it_IT",
+    type: "website",
+  },
+  robots: { index: true, follow: true },
+}`) +
+              st([
+                "Crea l'immagine <strong>og-image.jpg</strong>: dimensioni <code>1200 x 630px</code>, con una bella foto della casa e il nome scritto sopra. Puoi crearla gratis su <strong>canva.com</strong>. Salvala in <code>/public/og-image.jpg</code>",
+                "Salva tutto e fai push: <code>git add . && git commit -m \"feat: meta tag + OpenGraph\" && git push</code>",
+                "Aspetta il deploy Vercel (badge verde)"
+              ]) +
+              chk("vai su <strong>developers.facebook.com/tools/debug/</strong> → incolla il tuo URL → vedi l'anteprima corretta del sito.")
+          },
+          R.pausa, R.pranzo,
+          {
+            time:"13:30", dur:"30 min", cat:"lavoro", label:"Test meta tag con tools gratuiti online",
+            detail:
+              p("Verifica che i meta tag funzionino correttamente. Questi tool sono gratuiti e danno feedback immediato.") +
+              st([
+                "<strong>Facebook Sharing Debugger</strong>: <em>developers.facebook.com/tools/debug/</em> → scrivi il tuo URL → clicca 'Debug' → vedi come appare il sito condiviso su Facebook/WhatsApp",
+                "<strong>Twitter Card Validator</strong>: <em>cards-dev.twitter.com/validator</em> → inserisci URL",
+                "<strong>LinkedIn Post Inspector</strong>: <em>linkedin.com/post-inspector/</em> → inserisci URL",
+                "Testa anche su WhatsApp: mandati il link dal PC al telefono e controlla l'anteprima che appare"
+              ]) +
+              nt("Se l'anteprima su Facebook non si aggiorna, clicca <strong>'Scrape Again'</strong> nel Debugger. I social cache le preview per ore.")
+          },
+          {
+            time:"14:00", dur:"1h 30m", cat:"lavoro", label:"Schema.org — LodgingBusiness JSON-LD", highlight:true,
+            detail:
+              p("Lo Schema.org è codice invisibile che dice a Google <em>esattamente</em> che tipo di attività sei. Google lo usa per i rich results (stelle, prezzi nei risultati di ricerca) e le AI lo usano per capire di cosa parla il tuo sito.") +
+              st([
+                "Apri il file <code>app/page.js</code> (o il componente della homepage)",
+                "Aggiungi questo blocco dentro il <code>return</code> del componente, prima della chiusura di <code>&lt;/main&gt;</code>:"
+              ]) +
+              blk(`{/* Schema.org LodgingBusiness — incolla in fondo alla homepage */}
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{__html: JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "LodgingBusiness",
+    "name": "La Veranda da Simona",
+    "description": "Casa vacanza a Capena, vicino Roma, con veranda, giardino e parcheggio privato. Ideale per famiglie e soggiorni brevi.",
+    "url": "https://www.laverandadasimona.it",
+    "telephone": "+39XXXXXXXXXX",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Via XXXXX",
+      "addressLocality": "Capena",
+      "postalCode": "00060",
+      "addressRegion": "RM",
+      "addressCountry": "IT"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 42.1406,
+      "longitude": 12.5411
+    },
+    "image": ["https://www.laverandadasimona.it/og-image.jpg"],
+    "priceRange": "€€",
+    "checkinTime": "15:00",
+    "checkoutTime": "10:00",
+    "amenityFeature": [
+      {"@type":"LocationFeatureSpecification","name":"Wi-Fi gratuito","value":true},
+      {"@type":"LocationFeatureSpecification","name":"Aria condizionata","value":true},
+      {"@type":"LocationFeatureSpecification","name":"Parcheggio privato","value":true},
+      {"@type":"LocationFeatureSpecification","name":"Cucina attrezzata","value":true},
+      {"@type":"LocationFeatureSpecification","name":"Veranda","value":true}
+    ],
+    "sameAs": ["https://www.airbnb.it/rooms/XXXXXXXX"]
+  })}}
+/>`) +
+              st([
+                "Sostituisci i placeholder con i dati reali: telefono, indirizzo, link Airbnb",
+                "Per le <strong>coordinate GPS esatte</strong>: vai su maps.google.com → cerca la tua casa → tasto destro → 'Cosa c'è qui?' → copia i numeri",
+                "Salva e push: <code>git add . && git commit -m \"feat: schema.org lodging\" && git push</code>",
+                "Verifica: vai su <strong>search.google.com/test/rich-results</strong> → inserisci il tuo URL → Google ti dice se lo schema è corretto"
+              ]) +
+              chk("Rich Results Test riconosce il tuo LodgingBusiness senza errori in rosso.")
+          },
+          R.caffe,
+          {
+            time:"15:45", dur:"45 min", cat:"impara", label:"Studia: Schema.org e Google Rich Results",
+            detail:
+              p("Cerca su YouTube <strong>'Schema.org tutorial 2024'</strong> o leggi <em>schema.org/LodgingBusiness</em> per vedere tutti i campi disponibili. Poi guarda come Google usa questi dati nei risultati di ricerca cercando su Google 'hotel Capena' e guardando i risultati con stelle e prezzi.") +
+              nt("Più dati aggiungi allo schema (numero ospiti massimo, tipo di bagno, regole animali), più Google capisce la tua proprietà. Aggiungili gradualmente nelle settimane successive.")
+          },
+          R.camminata, R.libero, R.cena, R.review, R.serata, R.winddown, R.sonno
+        ]
+      },
+
+      /* ═══════════════════════════════════════════
+         MERCOLEDÌ — FASE 2 pt.2: Sitemap + GSC + FAQ
+         ═══════════════════════════════════════════ */
+      mer: {
+        label:"Mercoledì", short:"MER",
+        fase:"Fase 2 — SEO Classico (parte 2)",
+        faseDesc:"Sitemap · robots.txt · Google Search Console · Schema FAQPage",
+        faseColor:"#a07cb8",
+        slots:[
+          R.sveglia, R.colazione,
+          {
+            time:"10:00", dur:"1h 30m", cat:"lavoro", label:"Sitemap.xml + robots.txt in Next.js", highlight:true,
+            detail:
+              p("La sitemap dice a Google quali pagine esistono sul tuo sito. Il robots.txt dice a Google cosa può o non può indicizzare. In Next.js 13+ si creano con due semplici file — nessuna libreria aggiuntiva.") +
+              st([
+                "Crea il file <code>app/sitemap.js</code> con questo contenuto:"
+              ]) +
+              blk(`// app/sitemap.js
+export default function sitemap() {
+  return [
+    {
+      url: 'https://www.laverandadasimona.it',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 1,
+    },
+    // Aggiungi altre pagine se esistono:
+    // {
+    //   url: 'https://www.laverandadasimona.it/contatti',
+    //   lastModified: new Date(),
+    //   changeFrequency: 'yearly',
+    //   priority: 0.8,
+    // },
+  ]
+}`) +
+              st(["Crea il file <code>app/robots.js</code> con questo contenuto:"]) +
+              blk(`// app/robots.js
+export default function robots() {
+  return {
+    rules: { userAgent: '*', allow: '/' },
+    sitemap: 'https://www.laverandadasimona.it/sitemap.xml',
+  }
+}`) +
+              st([
+                "Salva entrambi, poi push: <code>git add . && git commit -m \"feat: sitemap + robots\" && git push</code>",
+                "Aspetta il deploy, poi verifica i due URL nel browser:",
+                "→ <em>https://www.laverandadasimona.it/sitemap.xml</em> (deve mostrare codice XML con i tuoi URL)",
+                "→ <em>https://www.laverandadasimona.it/robots.txt</em> (deve mostrare il testo con le regole)"
+              ]) +
+              chk("entrambi gli URL mostrano il loro contenuto. Nessuna pagina 404.")
+          },
+          {
+            time:"11:30", dur:"1h", cat:"lavoro", label:"Google Search Console — Setup + Indicizzazione",
+            detail:
+              p("Il pannello ufficiale di Google dove vedi come Google vede il tuo sito, quante persone lo trovano e cosa cercano. Gratis, fondamentale, va configurato subito.") +
+              st([
+                "Vai su <strong>search.google.com/search-console</strong> → accedi con il tuo account Google dell'attività",
+                "Clicca <strong>'+' (Aggiungi proprietà)</strong> → scegli <strong>'Prefisso URL'</strong> → scrivi <em>https://www.laverandadasimona.it</em> → Continua",
+                "Google ti chiede di verificare che sei il proprietario. Scegli <strong>'Tag HTML'</strong> — è il metodo più semplice con Next.js",
+                "Google ti dà un codice tipo <code>AbCdEfGhIjKlMnOpQrStUvWxYz</code> — copialo",
+                "Nel tuo <code>app/layout.js</code>, aggiungi questo all'oggetto <code>metadata</code>:"
+              ]) +
+              blk(`export const metadata = {
+  // ... tutto il resto che hai già ...
+  verification: {
+    google: 'INCOLLA_QUI_IL_CODICE_CHE_TI_HA_DATO_GOOGLE',
+  },
+}`) +
+              st([
+                "Salva, push (<code>git add . && git commit -m \"feat: GSC verification\" && git push</code>), aspetta deploy",
+                "Torna su Search Console → clicca <strong>'Verifica'</strong> → se tutto ok vedi 'Proprietà verificata' ✓",
+                "Menu a sinistra → <strong>'Sitemap'</strong> → scrivi <code>sitemap.xml</code> nel campo → clicca <strong>Invia</strong>",
+                "Torna alla panoramica → clicca il tuo URL homepage → poi clicca <strong>'Richiedi indicizzazione'</strong>",
+                "Google metterà il sito in coda. In 1-7 giorni apparirà nei risultati di ricerca"
+              ]) +
+              chk("Search Console mostra 'Proprietà verificata' e la Sitemap risulta 'Inviata con successo'.")
+          },
+          R.pausa, R.pranzo,
+          {
+            time:"13:30", dur:"30 min", cat:"lavoro", label:"Rich Results Test + PageSpeed primo check",
+            detail:
+              p("Due verifiche veloci per assicurarti che tutto il lavoro di ieri e stamattina sia corretto.") +
+              st([
+                "<strong>Rich Results Test</strong>: <em>search.google.com/test/rich-results</em> → inserisci il tuo URL → controlla che LodgingBusiness sia riconosciuto senza errori",
+                "<strong>PageSpeed Insights</strong>: <em>pagespeed.web.dev</em> → inserisci il tuo URL → guarda i punteggi su <strong>Mobile</strong> e Desktop",
+                "Se il punteggio mobile è sotto 70, il problema principale è quasi sempre le immagini troppo pesanti — segna questa cosa da fare sabato",
+                "Fai screenshot dei punteggi: è la tua baseline da migliorare nel tempo"
+              ]) +
+              nt("Un punteggio PageSpeed sotto 80 su mobile penalizza il ranking su Google. Le immagini vanno convertite in formato WebP e ottimizzate. Lo facciamo sabato.")
+          },
+          {
+            time:"14:00", dur:"1h 30m", cat:"lavoro", label:"Schema.org FAQPage + Sezione FAQ sul sito", highlight:true,
+            detail:
+              p("Le FAQ sono la cosa più importante per l'<strong>AI SEO</strong>. ChatGPT, Gemini e Perplexity leggono le FAQ per capire chi sei e le citano nelle risposte. Aggiungi questa sezione al sito e il relativo codice Schema.org.") +
+              st([
+                "Prima aggiungi una sezione FAQ visibile nella pagina (come componente React). Usa queste domande come base, poi aggiungine altre specifiche alla tua casa:"
+              ]) +
+              blk(`// Domande da includere nella sezione FAQ visibile del sito:
+
+Q: Quanto dista La Veranda da Simona dal centro di Roma?
+A: La casa si trova a Capena (RM), a circa 30 km dal centro di Roma,
+   raggiungibile in 35 minuti in auto o con i mezzi (treno + bus).
+
+Q: Quante persone può ospitare la casa?
+A: La casa può ospitare fino a [X] persone. [Descrivi camere e letti]
+
+Q: C'è il parcheggio?
+A: Sì, la casa dispone di parcheggio privato gratuito.
+
+Q: Qual è l'orario di check-in e check-out?
+A: Check-in dalle 15:00, check-out entro le 10:00.
+   Orari flessibili su richiesta, contattaci prima.
+
+Q: Si possono portare animali domestici?
+A: [La tua risposta]
+
+Q: Come si prenota?
+A: Puoi prenotare su Airbnb oppure contattarci direttamente
+   per informazioni via email o telefono.`) +
+              st(["Poi aggiungi lo Schema.org FAQPage nella homepage, subito DOPO il blocco LodgingBusiness di ieri:"]) +
+              blk(`<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{__html: JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Quanto dista dal centro di Roma?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "La Veranda da Simona si trova a Capena, a 30 km da Roma, circa 35 minuti in auto."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "C'è il parcheggio?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sì, la casa dispone di parcheggio privato gratuito."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Come si prenota?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Puoi prenotare su Airbnb o contattarci direttamente per informazioni."
+        }
+      }
+      // ... aggiungi tutte le altre domande nello stesso formato ...
+    ]
+  })}}
+/>`) +
+              st([
+                "Salva, push, aspetta deploy",
+                "Verifica: <em>search.google.com/test/rich-results</em> → dovresti vedere sia 'LodgingBusiness' sia 'FAQ' tra i rich results"
+              ]) +
+              chk("Rich Results Test mostra sia LodgingBusiness che FAQPage senza errori.")
+          },
+          R.caffe,
+          {
+            time:"15:45", dur:"45 min", cat:"impara", label:"Studia: come Google sceglie i ranking locali",
+            detail:
+              p("Cerca su YouTube <strong>'Google local SEO 2024'</strong> o <strong>'come apparire su Google Maps'</strong>. I 3 fattori principali del ranking locale sono: <em>Relevance</em> (pertinenza alla ricerca), <em>Distance</em> (distanza dall'utente), <em>Prominence</em> (quanto sei conosciuto — recensioni, link, menzioni).") +
+              nt("La prominence si costruisce nel tempo. Le recensioni Google sono il fattore più rapido da influenzare. Inizia a raccoglierle da subito — anche solo 5 recensioni a 5 stelle fanno una differenza enorme.")
+          },
+          R.palestra, R.libero, R.cena, R.review, R.serata, R.winddown, R.sonno
+        ]
+      },
+
+      /* ═══════════════════════════════════════════
+         GIOVEDÌ — FASE 3: Google Business Profile
+         ═══════════════════════════════════════════ */
+      gio: {
+        label:"Giovedì", short:"GIO",
+        fase:"Fase 3 — Google Business Profile",
+        faseDesc:"Completamento profilo al 100% · Foto · Descrizione · Strategia recensioni",
+        faseColor:"#6a8fb8",
+        slots:[
+          R.sveglia, R.colazione,
+          {
+            time:"10:00", dur:"2h 30m", cat:"lavoro", label:"Google Business Profile — Completamento 100%", highlight:true,
+            detail:
+              p("La scheda Google Business fa apparire la tua casa su Google Maps e nei risultati locali. Un profilo completo al 100% riceve fino a 7 volte più click di uno incompleto. Oggi lo porti al massimo.") +
+              st([
+                "Vai su <strong>business.google.com</strong> → accedi con il tuo account Google dell'attività",
+                "Se non esiste ancora una scheda: clicca 'Aggiungi la tua attività' → segui il wizard. Se esiste: clicca 'Modifica profilo'",
+                "<strong>NOME</strong>: scrivi esattamente <em>La Veranda da Simona</em> — deve essere identico ovunque (sito, Airbnb, Booking). MAI scrivere 'Veranda Simona' o varianti",
+                "<strong>CATEGORIA</strong>: seleziona <em>'Affitto per vacanze'</em> come principale, <em>'Affittacamere'</em> come secondaria",
+                "<strong>INDIRIZZO</strong>: indirizzo completo e preciso di Capena. Verifica che il pin su Maps sia posizionato esattamente sulla tua casa — puoi spostarlo",
+                "<strong>SITO WEB</strong>: <code>https://www.laverandadasimona.it</code>",
+                "<strong>TELEFONO</strong>: il numero a cui rispondete per le prenotazioni",
+                "<strong>ORARI</strong>: metti 'Sempre aperto' oppure gli orari in cui rispondete al telefono/messaggi",
+                "<strong>DESCRIZIONE</strong> (750 caratteri max): usa questo testo come base, adattandolo:"
+              ]) +
+              blk(`Casa vacanza accogliente a Capena, a soli 30 km dal centro di Roma.
+La Veranda da Simona è l'ideale per famiglie, coppie e gruppi
+che vogliono godersi la quiete della campagna laziale a pochi
+chilometri dalla capitale.
+
+La proprietà dispone di veranda privata, giardino, parcheggio
+gratuito, Wi-Fi, aria condizionata e cucina completamente attrezzata.
+Check-in dalle 15:00. Prenota su Airbnb o contattaci per info.`) +
+              st([
+                "<strong>FOTO</strong>: carica almeno 10-15 foto. Google premia i profili con tante foto. Ordine consigliato: esterno casa (2), veranda/giardino (2-3), camera da letto (1-2), bagno (1), cucina (1), soggiorno (1). Foto luminose, <em>orizzontali</em> (landscape), minimo 720px di larghezza",
+                "<strong>ATTRIBUTI</strong>: nella sezione 'Informazioni' seleziona tutto quello che hai: Wi-Fi, parcheggio gratuito, aria condizionata, cucina, lavatrice, balcone/terrazza",
+                "Se c'è il campo <strong>'Link prenotazione'</strong>: metti il link diretto all'annuncio Airbnb",
+                "Aggiungi <strong>prodotti o servizi</strong> se il campo è disponibile: 'Casa vacanza', 'Affitto breve' come voci",
+                "Controlla che il pin sia nella posizione esatta — influenza le ricerche di prossimità su Maps"
+              ]) +
+              chk("il profilo Google Business è al 100% e ha almeno 10 foto caricate.")
+          },
+          R.pausa, R.pranzo,
+          {
+            time:"13:30", dur:"30 min", cat:"lavoro", label:"Prepara e ottimizza le foto per Google Business",
+            detail:
+              p("Se non hai ancora 10-15 foto ottimizzate pronte, usa questo slot. Non servono foto professionali — servono foto luminose, nitide, orizzontali.") +
+              st([
+                "Scatta nuove foto con il telefono durante l'ora di luce migliore (mattina presto o pomeriggio tardi — evita il mezzogiorno che crea ombre dure)",
+                "Per ogni stanza: apri le tapparelle al massimo, accendi tutte le luci, metti tutto in ordine, scatta da un angolo che mostri lo spazio",
+                "Ridimensiona se troppo pesanti su <strong>squoosh.app</strong> (gratis): formato JPEG, qualità 85%, max 2MB",
+                "Rinomina i file in modo descrittivo prima di caricarli: <em>veranda-casavacanza-capena.jpg</em> aiuta il SEO delle immagini"
+              ]) +
+              nt("Il nome del file delle foto influenza il SEO delle immagini su Google Immagini. Usa parole chiave pertinenti: <em>camera-matrimoniale-capena.jpg</em> è meglio di <em>IMG_1234.jpg</em>.")
+          },
+          {
+            time:"14:00", dur:"1h 30m", cat:"lavoro", label:"Strategia recensioni + Template messaggi ospiti", highlight:true,
+            detail:
+              p("Le recensioni Google sono il fattore singolo più potente per apparire su Maps e convincere nuovi ospiti. Costruiamo un sistema semplice per raccoglierle dopo ogni soggiorno.") +
+              st([
+                "Ottieni il <strong>link diretto alle recensioni</strong>: su business.google.com → cerca 'Ottieni link per le recensioni' (di solito in 'Strumenti per le imprese' o 'Promozione'). Copialo e salvalo su Notes/Notion.",
+                "Crea il template da mandare agli ospiti su Airbnb 24-48 ore dopo il check-out:"
+              ]) +
+              blk(`Ciao [Nome]! 👋
+
+Grazie per aver scelto La Veranda da Simona, speriamo
+che il soggiorno sia stato di vostro gradimento e abbiate
+potuto godervi la quiete della campagna laziale!
+
+Se avete qualche minuto, ci farebbe enormemente piacere
+una recensione su Google — ci aiuta tantissimo ad essere
+trovati da altri ospiti:
+
+→ [INCOLLA IL LINK RECENSIONI GOOGLE QUI]
+
+(Se avete qualcosa da dirci, scriveteci direttamente —
+siamo sempre disponibili a migliorare 🙏)
+
+A presto! 🌿
+Simona`) +
+              st(["Crea anche un template per rispondere alle recensioni positive:"]) +
+              blk(`Grazie mille [Nome], siamo felicissimi che abbiate
+gradito il soggiorno! Speriamo di riaccogliervi presto
+alla Veranda — magari in un'altra stagione, quando
+i dintorni di Capena offrono paesaggi diversi 🌿`) +
+              st([
+                "Rispondi <strong>sempre</strong> a ogni recensione entro 48 ore — Google premia i profili reattivi con ranking migliore",
+                "Per le recensioni negative (capiterà): rispondi sempre con professionalità, mai in modo difensivo. Riconosci il problema, spiega cosa hai migliorato",
+                "Salva entrambi i template in un posto sempre accessibile (Notes, Notion, Memo vocali)"
+              ]) +
+              chk("hai il link recensioni salvato e i template pronti da usare al prossimo ospite.")
+          },
+          R.caffe,
+          {
+            time:"15:45", dur:"45 min", cat:"impara", label:"Studia: Local SEO e Google Maps ranking",
+            detail:
+              p("Cerca <strong>'Google Maps ranking factors 2024'</strong>. I fattori principali: NAP consistency (nome/indirizzo/telefono uguale ovunque), numero e qualità delle recensioni, completezza del profilo, link al sito da altre fonti. Leggi anche la guida ufficiale su <em>support.google.com/business</em>.") +
+              nt("<strong>NAP = Name, Address, Phone.</strong> Deve essere identico su: sito web, Google Business, Airbnb, Booking.com. Anche 'Via Roma 5' vs 'Via Roma, 5' (senza virgola) crea una discrepanza che penalizza il ranking.")
+          },
+          R.camminata, R.libero, R.cena, R.review, R.serata, R.winddown, R.sonno
+        ]
+      },
+
+      /* ═══════════════════════════════════════════
+         VENERDÌ — FASE 4: AI SEO (GEO)
+         ═══════════════════════════════════════════ */
+      ven: {
+        label:"Venerdì", short:"VEN",
+        fase:"Fase 4 — AI SEO (GEO)",
+        faseDesc:"Bing Webmaster · NAP consistency · Contenuti per ChatGPT e Perplexity",
+        faseColor:"#e07a7a",
+        slots:[
+          R.sveglia, R.colazione,
+          {
+            time:"10:00", dur:"1h 30m", cat:"lavoro", label:"Bing Webmaster Tools + NAP consistency check", highlight:true,
+            detail:
+              p("Bing alimenta Perplexity, Microsoft Copilot e DuckDuckGo. Registrarti lì è gratis e veloce — è un segmento di traffico che stai lasciando per strada. Poi controlliamo la coerenza di nome, indirizzo e telefono ovunque.") +
+              st([
+                "Vai su <strong>bing.com/webmasters</strong> → accedi con un account Microsoft (se non ce l'hai, creane uno gratis)",
+                "Clicca 'Aggiungi sito' → scrivi <em>https://www.laverandadasimona.it</em> → Aggiungi",
+                "Scegli il metodo di verifica <strong>'Meta tag'</strong> → copia il codice che ti dà Bing",
+                "Nel tuo <code>app/layout.js</code>, aggiungi il codice Bing nell'oggetto metadata (assieme a quello Google già presente):"
+              ]) +
+              blk(`export const metadata = {
+  // ... tutto il resto ...
+  verification: {
+    google: 'CODICE_GOOGLE_GIA_PRESENTE',
+    other: {
+      'msvalidate.01': 'INCOLLA_QUI_IL_CODICE_BING',
+    },
+  },
+}`) +
+              st([
+                "Salva, push (<code>git add . && git commit -m \"feat: bing webmaster verification\" && git push</code>), aspetta deploy",
+                "Torna su Bing Webmaster → clicca <strong>'Verifica'</strong> → se verde sei dentro",
+                "Menu sinistra → <strong>Sitemap</strong> → aggiungi <em>https://www.laverandadasimona.it/sitemap.xml</em> → Invia",
+                "Ora fai il <strong>NAP consistency check</strong>: apri un foglio e controlla che questo sia identico ovunque:",
+                "→ <strong>Sito web</strong> (footer o pagina contatti): nome, indirizzo, telefono",
+                "→ <strong>Google Business Profile</strong>: nome, indirizzo, telefono",
+                "→ <strong>Airbnb</strong>: nome annuncio, indirizzo, telefono host",
+                "→ <strong>Booking.com</strong> (quando lo crei domani): stesso nome esatto",
+                "Se trovi discrepanze: correggile subito. Anche 'La Veranda da Simona' vs 'Veranda da Simona' conta"
+              ]) +
+              chk("Bing Webmaster mostra la proprietà verificata, la sitemap inviata, e NAP è identico su tutti i profili.")
+          },
+          {
+            time:"11:30", dur:"1h", cat:"lavoro", label:"Contenuto GEO — sezione 'La zona'",
+            detail:
+              p("Le AI citano siti che rispondono a domande specifiche con contenuti utili e localizzati. Aggiungi al sito una sezione o una pagina chiamata 'La zona' o 'Cosa fare vicino Capena'. È il tipo di contenuto che ChatGPT e Perplexity leggono e citano.") +
+              st([
+                "Crea una sezione nella homepage (o una pagina <code>app/zona/page.js</code>) con questi contenuti minimi:",
+                "→ <strong>Distanza da Roma</strong>: '30 km, 35 minuti in auto, raggiungibile anche con treno da Roma Termini + bus locale'",
+                "→ <strong>Distanza aeroporti</strong>: Fiumicino (45 min), Ciampino (40 min)",
+                "→ <strong>Cosa vedere vicino</strong>: Monterosi, Civita Castellana, Calcata, Lago di Bracciano, Parco Regionale di Veio, Casperia",
+                "→ <strong>Perché la Sabina</strong>: silenzio, natura, gastronomia locale (olio, vino, tartufo), borghi medievali",
+                "→ <strong>Stagioni consigliate</strong>: primavera per i paesaggi, autunno per la vendemmia, estate per le sere fresche",
+                "Scrivi in modo naturale — come risponderesti a un amico, non come una brochure turistica",
+                "Minimo <strong>300 parole</strong>: le AI ignorano i contenuti troppo brevi",
+                "Salva, push, aspetta deploy"
+              ]) +
+              nt("Questo contenuto fa sì che quando qualcuno chiede a ChatGPT 'dove posso andare per un weekend fuori Roma nella natura?', la Sabina e la tua casa possano essere menzionate come opzione.")
+          },
+          R.pausa, R.pranzo,
+          {
+            time:"13:30", dur:"30 min", cat:"lavoro", label:"Verifica finale NAP + controllo trasversale sito",
+            detail:
+              p("Usa questo slot per fare una verifica dalla prospettiva di un potenziale ospite che non sa nulla della casa. Apri il sito in incognito.") +
+              st([
+                "Controlla che 'La Veranda da Simona' sia scritto identico ovunque sul sito (header, footer, meta tag, Schema.org)",
+                "Verifica che telefono e email siano visibili e corretti in ogni pagina",
+                "Testa tutti i link: Airbnb, eventuali pulsanti 'Prenota', link social, link nella nav",
+                "Cerca su Google: <em>La Veranda da Simona</em> → vedi se appare la scheda Google Business?",
+                "Cerca: <em>casa vacanza Capena</em> → il sito è già nei risultati? (potrebbe non esserlo ancora)"
+              ])
+          },
+          {
+            time:"14:00", dur:"1h 30m", cat:"lavoro", label:"Review della settimana + Piano prossima settimana", highlight:true,
+            detail:
+              p("Hai completato 4 fasi in 5 giorni. Usa questo blocco per consolidare e pianificare cosa rimane.") +
+              st([
+                "Apri un doc e spunta mentalmente: Vercel ✓, Dominio ✓, Meta tag ✓, OpenGraph ✓, Schema LodgingBusiness ✓, Schema FAQ ✓, Sitemap ✓, robots.txt ✓, Google Search Console ✓, Google Business ✓, Bing Webmaster ✓, GEO content ✓",
+                "Cosa non è ancora completato? Aggiungi a una lista separata con priorità",
+                "Prossima settimana: inizia a raccogliere le prime recensioni Google dagli ospiti Airbnb attuali",
+                "Settimana 2: monitora Search Console per le prime keyword — cosa cercano le persone per arrivare al tuo sito?",
+                "Idee per contenuti futuri: galleria foto espansa, video della veranda, sezione 'Esperienze', post blog stagionali"
+              ]) +
+              chk("hai una checklist chiara di cosa è fatto e cosa rimane.")
+          },
+          R.caffe,
+          {
+            time:"15:45", dur:"45 min", cat:"impara", label:"Studia: GEO — Generative Engine Optimization",
+            detail:
+              p("Cerca <strong>'GEO generative engine optimization'</strong> o <strong>'AEO answer engine optimization 2024'</strong> su YouTube o Google. È il campo che sta emergendo adesso — chi lo capisce prima ha un vantaggio reale. Cerca anche <strong>'how to rank on Perplexity'</strong> per casi pratici.") +
+              nt("Il concetto chiave del GEO: le AI citano fonti chiare, autorevoli, coerenti, che rispondono a domande specifiche. Schema.org, FAQ, NAP consistency e contenuti localizzati ti mettono già nella posizione giusta.")
+          },
+          R.palestra, R.libero, R.cena, R.review, R.serata, R.winddown, R.sonno
+        ]
+      },
+
+      /* ═══════════════════════════════════════════
+         SABATO — FASE 5: Extra & Visibilità
+         ═══════════════════════════════════════════ */
+      sab: {
+        label:"Sabato", short:"SAB",
+        fase:"Fase 5 — Extra & Visibilità",
+        faseDesc:"Booking.com · Google Analytics 4 · PageSpeed · Instagram",
+        faseColor:"#c8a96e",
+        slots:[
+          { time:"09:30", dur:"45 min", cat:"corpo", label:"Sveglia & Colazione (sabato)", detail: p("Si inizia un po' più tardi. Colazione tranquilla con proteine. Il lavoro di oggi è più operativo — platform setup, non sviluppo intenso.") },
+          {
+            time:"10:15", dur:"15 min", cat:"mente", label:"Review della settimana — cosa manca?",
+            detail:
+              p("Rileggi la checklist di venerdì. Oggi chiudi le ultime cose: Booking.com, Analytics, PageSpeed, Instagram. Non servono grandi blocchi di concentrazione — sono task operativi e lineari.") +
+              nt("Se hai ancora bug da risolvere sul sito, mettili in cima. La qualità del sito viene prima di qualsiasi nuova piattaforma.")
+          },
+          {
+            time:"10:30", dur:"2h", cat:"lavoro", label:"Booking.com — Registra la proprietà", highlight:true,
+            detail:
+              p("Booking.com raggiunge un pubblico diverso da Airbnb — più europeo, più business travel, più last-minute. La commissione è simile (~15%) ma i canali sono diversi. Vale la pena essere su entrambi.") +
+              st([
+                "Vai su <strong>partner.booking.com</strong> → clicca 'Registra la tua struttura'",
+                "Tipo di proprietà: scegli <em>'Casa/Appartamento per vacanze'</em> o <em>'Affitto per vacanze'</em>",
+                "Inserisci l'indirizzo esatto di Capena — Booking ti chiede le coordinate GPS: usa le stesse che hai messo nello Schema.org",
+                "<strong>NOME</strong>: usa esattamente <em>La Veranda da Simona</em> — NAP consistency sempre!",
+                "Inserisci numero di camere, posti letto, bagni",
+                "<strong>Foto</strong>: carica le stesse foto che hai usato per Google Business (già ottimizzate)",
+                "<strong>Descrizione</strong>: puoi adattare quella già scritta per Google Business",
+                "Configura le politiche: stessi orari check-in/check-out di Airbnb, politica di cancellazione, regole della casa",
+                "Booking.com fa un processo di review interno: la proprietà va live entro 1-3 giorni",
+                "Una volta approvata e live: vai su <strong>Impostazioni → Calendario → Sincronizzazione iCal</strong> per sincronizzare con Airbnb ed evitare double booking",
+                "Da Airbnb: vai su Annuncio → Disponibilità → Sync iCal → copia il link del calendario → incollalo su Booking",
+                "Da Booking: copia il link del loro calendario → incollalo su Airbnb. Così i due calendari si sincronizzano automaticamente"
+              ]) +
+              chk("la proprietà è stata inviata per review su Booking.com e hai i link iCal pronti per la sincronizzazione.")
+          },
+          { time:"12:30", dur:"15 min", cat:"corpo", label:"Pausa", detail: p("Stacca dallo schermo. Bevi acqua. Due minuti fuori.") },
+          { time:"12:45", dur:"45 min", cat:"corpo", label:"Pranzo", detail: p("Pasto completo. Sabato ti sei guadagnato qualcosa di buono.") },
+          {
+            time:"13:30", dur:"1h 30m", cat:"lavoro", label:"Google Analytics 4 + PageSpeed ottimizzazione immagini",
+            detail:
+              p("Analytics ti dice quante persone visitano il sito, da dove vengono, cosa guardano. PageSpeed misura la velocità — e la velocità influenza il ranking su Google.") +
+              st([
+                "<strong>— Google Analytics 4 —</strong>",
+                "Vai su <strong>analytics.google.com</strong> → accedi con il tuo account Google dell'attività",
+                "Clicca 'Crea account' → nome account: La Veranda da Simona → 'Avanti'",
+                "Crea proprietà → nome: laverandadasimona.it → fuso orario: Europa/Roma → valuta: EUR",
+                "Scegli piattaforma: <strong>'Web'</strong> → inserisci URL e nome sito",
+                "Google ti dà un <strong>Measurement ID</strong> tipo <code>G-XXXXXXXXXX</code> → copialo",
+                "Nel progetto Next.js, installa: <code>npm install @next/third-parties</code> → poi push",
+                "Nel file <code>app/layout.js</code>, aggiungi l'import e il componente:"
+              ]) +
+              blk(`import { GoogleAnalytics } from '@next/third-parties/google'
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="it">
+      <body>
+        {children}
+        <GoogleAnalytics gaId="G-XXXXXXXXXX" />
+      </body>
+    </html>
+  )
+}`) +
+              st([
+                "Salva, push (<code>git add . && git commit -m \"feat: analytics\" && git push</code>), aspetta deploy",
+                "Verifica: in Google Analytics → Rapporti → Tempo reale → apri il tuo sito in una finestra → dovresti vederti come utente attivo",
+                "<strong>— PageSpeed ottimizzazione —</strong>",
+                "Vai su <strong>pagespeed.web.dev</strong> → inserisci il tuo URL → aspetta l'analisi completa",
+                "Se il punteggio mobile è sotto 80: il problema principale sono le immagini. Apri <strong>squoosh.app</strong>",
+                "Su Squoosh: carica ogni immagine → seleziona formato <strong>WebP</strong> a sinistra → qualità 75-80% → confronta visivamente → scarica",
+                "Sostituisci i file immagine nella cartella <code>/public</code> con le versioni WebP ottimizzate",
+                "Aggiorna i riferimenti nel codice (da <code>.jpg</code> a <code>.webp</code>)",
+                "Push e ricontrolla PageSpeed — dovresti vedere un miglioramento significativo (spesso +20-30 punti)"
+              ]) +
+              chk("Analytics traccia le visite in tempo reale e PageSpeed è sopra 80 su mobile.")
+          },
+          {
+            time:"15:15", dur:"45 min", cat:"lavoro", label:"Instagram — Setup account La Veranda da Simona",
+            detail:
+              p("Instagram è opzionale ma smart: molte persone cercano posti dove soggiornare anche su Instagram. Un profilo curato può portare prenotazioni dirette (zero commissioni).") +
+              st([
+                "Crea un account Instagram business: prova <strong>@laverandadasimona</strong> (o @veranda.simona se è già preso)",
+                "Foto profilo: logo della casa o una bella foto della veranda",
+                "Bio (max 150 caratteri): <em>🌿 Casa vacanza a Capena · 30km da Roma · Veranda · Giardino · ↓ Prenota</em>",
+                "Link in bio: <em>https://www.laverandadasimona.it</em>",
+                "Prima pubblicazione: la foto più bella della casa con caption: <em>La nostra veranda vi aspetta 🌿 Casa vacanza a Capena, a pochi minuti da Roma. Link in bio per info.</em>",
+                "Hashtag da usare: <em>#casavacanzaRoma #weekendLazio #Sabina #affittobreveitalia #casavacanzaItalia #turismolazio #RomaNord #Capena</em>",
+                "Piano editoriale semplice: 2-3 post a settimana — foto della casa, dei dintorni, dei tramonti, delle stagioni. Niente stress."
+              ]) +
+              nt("Non serve diventare un influencer. Bastano foto belle e una cadenza regolare. Chi cerca su Instagram 'casa vacanza vicino Roma' e ti trova può prenotare direttamente — zero commissioni.")
+          },
+          { time:"16:00", dur:"—", cat:"libero", label:"Tempo libero / Fine settimana", detail: p("Hai completato la settimana del lancio. Stacca davvero. Rocket League, musica, una camminata. Il cervello consolida le informazioni durante il riposo.") },
+          { time:"19:00", dur:"1h", cat:"corpo", label:"Cena", detail: p("Sabato sera. Mangia qualcosa di buono. Hai fatto una settimana intera di lavoro serio.") },
+          { time:"20:00", dur:"—", cat:"libero", label:"Serata libera", detail: p("Nessun task. Nessun piano. Serata tua.") }
+        ]
+      },
+
+      /* ═══════════════════════════════════════════
+         DOMENICA — Riposo
+         ═══════════════════════════════════════════ */
+      dom: {
+        label:"Domenica", short:"DOM",
+        fase:"Riposo",
+        faseDesc:"Niente lavoro · Recupero · Ricarica per la settimana",
+        faseColor:"#2e2e38",
+        slots:[
+          { time:"—", dur:"—", cat:"corpo", label:"Sveglia libera", detail: p("Niente sveglia. Niente piano. Alzati quando vuoi.") },
+          { time:"—", dur:"—", cat:"corpo", label:"Colazione tranquilla", detail: p("Niente schermo per almeno un'ora. Caffè, colazione lenta, finestra aperta.") },
+          { time:"—", dur:"—", cat:"libero", label:"Giornata libera — niente lavoro", detail: p("Zero task. Zero dev. Il cervello consolida tutto quello che hai fatto in settimana durante il riposo — non è tempo perso, è parte del processo. Se senti l'impulso di 'fare qualcosa di produttivo', fai una camminata invece.") },
+          { time:"19:00", dur:"1h", cat:"corpo", label:"Cena", detail: p("Pasto completo. Domenica sera — preparati mentalmente alla settimana che viene.") },
+          {
+            time:"20:00", dur:"30 min", cat:"mente", label:"3 intenzioni per la prossima settimana",
+            detail:
+              p("Non un piano dettagliato — solo 3 intenzioni. Cosa vuoi portare avanti? Esempi: prima recensione Google raccolta, monitorare Search Console ogni mattina, iniziare a guardare n8n. Scrivile su carta, non sul telefono.") +
+              nt("La prossima settimana: controlla Search Console ogni mattina per 5 minuti. Guarda le keyword che portano al sito e le pagine più visitate. I dati iniziano ad arrivare dopo 7-14 giorni dall'indicizzazione.")
+          },
+          R.serata, R.winddown, R.sonno
+        ]
+      }
+    };
+
+    /* ── state ────────────────────────────────────── */
+    let activeDay    = 'lun';
+    let activeFilter = 'all';
+    let openIdx      = null;
+
+    /* ── render ─────────────────────────────────── */
+    function renderFaseBar() {
+      const d = days[activeDay];
+      document.getElementById('fase-indicator').innerHTML =
+        `<span style="color:${d.faseColor}">${d.fase}</span>` +
+        `<span class="desc">${d.faseDesc}</span>`;
+    }
+
+    function render() {
+      const container = document.getElementById('schedule');
+      container.innerHTML = '';
+      const d = days[activeDay];
+      const visible = activeFilter === 'all' ? d.slots : d.slots.filter(s => s.cat === activeFilter);
+
+      visible.forEach(s => {
+        const orig = d.slots.indexOf(s);
+        const c    = cats[s.cat];
+        const open = openIdx === orig;
+
+        const div = document.createElement('div');
+        div.className = 'slot' + (open ? ' open' : '');
+        div.style.borderLeftColor = open ? c.color : 'transparent';
+
+        div.innerHTML = `
+          <div class="slot-row">
+            <span class="slot-time" style="${open ? 'color:'+c.color : ''}">${s.time}</span>
+            <span class="slot-dur">${s.dur}</span>
+            <div class="slot-dot" style="background:${c.color}"></div>
+            <span class="slot-name${s.highlight ? ' highlight' : ''}">${s.label}</span>
+            <span class="slot-cat" style="color:${c.color}">${c.label.toUpperCase()}</span>
+            <span class="slot-arrow"></span>
+          </div>
+          <div class="slot-detail">${s.detail}</div>`;
+
+        div.addEventListener('click', () => {
+          openIdx = open ? null : orig;
+          render();
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    /* ── tab clicks ─────────────────────────────── */
+    document.querySelectorAll('.day-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeDay    = btn.dataset.day;
+        activeFilter = 'all';
+        openIdx      = null;
+        document.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('active'); b.style.borderColor = ''; b.style.color = '';
+          if (b.dataset.cat === 'all') b.classList.add('active');
+        });
+        renderFaseBar();
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    /* ── week grid jump ─────────────────────────── */
+    document.querySelectorAll('.week-day[data-jump]').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const target = cell.dataset.jump;
+        document.querySelector(`.day-tab[data-day="${target}"]`)?.click();
+      });
+    });
+
+    /* ── filter clicks ──────────────────────────── */
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeFilter = btn.dataset.cat;
+        openIdx = null;
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('active'); b.style.borderColor = ''; b.style.color = '';
+        });
+        btn.classList.add('active');
+        if (activeFilter !== 'all') {
+          const col = getComputedStyle(btn).getPropertyValue('--c').trim();
+          if (col) { btn.style.borderColor = col; btn.style.color = col; }
+        }
+        render();
+      });
+    });
+
+    /* ── init ───────────────────────────────────── */
+    renderFaseBar();
+    render();
+  </script>
+
+</body>
+</html>
